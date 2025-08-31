@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe | Lobby</title>
+</head>
+<body>
+    <h1>Lobby</h1>
+
+    <label>Create Lobby: </label>
+    <input type="text" id="roomInp">
+    <button id="createBtn">Create</button>
+    <script>
+        const createBtn = document.querySelector("#createBtn");
+        const roomInp = document.querySelector("#roomInp");
+        createBtn.onclick = function(){
+            const roomName = roomInp.value;
+            window.location.pathname = `/game/board/${roomName}`;
+        }
+    </script>
+</body>
+</html>

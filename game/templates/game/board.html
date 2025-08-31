@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe | Play</title>
+</head>
+<body>
+    <h1>Game</h1>
+    <input type="text" id="msg">
+    <button id="sendBtn">Send</button>
+    <ul id="msg-disp"></ul>
+
+    {{room_name|json_script:"room_name"}}
+    <script>
+        const room_name = JSON.parse(document.getElementById('room_name').textContent);
+        const url = `ws://${window.location.host}/ws/move/${room_name}/`;
+        const moveSocket = new WebSocket(url);
+        
+        moveSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log("Data",data);
+            console.log(data['type']);
+            if(data['type']==="message_received"){
+                const newNode = document.createElement('li');
+                newNode.innerText = `${data['message_was']}`
+                msgdisp.appendChild(newNode);
+            }
+        }
+
+        moveSocket.onclose = function(e) {
+            console.error("move socket closed unexp");
+        }
+        
+        const msg = document.querySelector("#msg");
+        const sendBtn = document.querySelector("#sendBtn");
+        const msgdisp = document.querySelector("#msg-disp");
+
+        sendBtn.onclick = function(){
+            moveSocket.send(JSON.stringify({
+                'type': 'message',
+                'message': msg.value
+            }));
+            msg.value = ""
+        }
+    </script>
+</body>
+</html>
