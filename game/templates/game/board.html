@@ -21,11 +21,11 @@
             const data = JSON.parse(e.data);
             console.log("Data",data);
             console.log(data['type']);
-            if(data['type']==="message_received"){
+            // if(data['type']==="message_received"){
                 const newNode = document.createElement('li');
                 newNode.innerText = `${data['message_was']}`
                 msgdisp.appendChild(newNode);
-            }
+            // }
         }
 
         moveSocket.onclose = function(e) {
