@@ -1,0 +1,113 @@
+*{
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+}
+
+.container_main{
+    display: flex;
+    padding: 2em;
+}
+
+.container{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 1rem 0;
+}
+
+.controls{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+.controls > *{
+    margin: 0 0.3rem;
+}
+
+.board{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    height: fit-content;
+    padding: 0.2rem;
+    margin: 1rem 0;
+    font-family: 'Courier New', Courier, monospace;
+    /* background-color: rgb(150, 150, 150); */
+    /* border: 1px solid red; */
+    /* background-color: black; */
+}
+
+.row{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    height: fit-content;
+}
+
+.unit{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 150px;
+    height: 150px;
+    font-size: 52px;
+    margin: 0.2rem;
+    border-radius: 0.8rem;
+    /* border: 1px solid red; */
+    background-color: rgb(56, 56, 56);
+    color: aliceblue;
+}
+
+button{
+    border: none;
+    background: linear-gradient(rgb(34, 34, 34), rgb(9, 3, 14));
+    font-size: 16px;
+    padding: 0.4em 0.6em;
+    color: white;
+    border-radius: 0.8em;
+}
+
+.unbdisp{
+    background:linear-gradient(rgb(255, 208, 0),rgb(219, 80, 0));
+    color: rgba(131, 0, 0, 0.849);
+}
+
+#result{
+    font-size: 20px;
+    font-weight: bold;
+}
+
+button:hover{
+    cursor: pointer;
+}
+
+#reset:hover, #compfst:hover{
+    background: linear-gradient(rgb(49, 48, 49), rgb(28, 11, 43));
+}
+
+.unit:hover{
+    cursor: pointer;
+}
+
+@media screen and (max-width: 600px){
+    .unit{
+        width: 100px;
+        height: 100px;
+    }
+
+    .controls{
+        flex-direction: column;
+        
+    }
+    .controls > *{
+        margin: 0.2rem 0;
+    }
+}
