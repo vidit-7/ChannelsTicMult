@@ -76,34 +76,44 @@ def checkFreeSpots(board):
                 taken += 1
     return False if taken==total else True
 
-def checkGameOverWin(board):
-    winner = checkWinner()
+def checkGameOverWin(game_state):
+    winner = checkWinner(game_state['board'])
     if winner != "":
+        game_state['winner'] = winner
         return (True, winner)
     
-    if(not checkFreeSpots(board)):
+    if(not checkFreeSpots(game_state['board'])):
+        game_state['winner'] = "Tie"
         return (True, "Tie")
     
     return (False, None)
 
-def playerMakeMove(current_game, x, y, playerSymbol):
-    if checkValidMove(x, y) and current_game['move_hist'][-1][3]!=playerSymbol:
-        current_game['board'][x][y] = playerSymbol
-        current_game['move_hist'].append((x,y,playerSymbol))
-        return True
+def playerMakeMove(current_game_state, x, y, player_id):
+    if(not current_game_state['winner']):
+        playerSymbol = current_game_state['pid_to_symbol'][player_id]
+        if current_game_state['turn'] == playerSymbol:
+            if checkValidMove(current_game_state['board'], x, y):
+                print("valid move")
+                current_game_state['board'][x][y] = playerSymbol
+                current_game_state['move_hist'].append((x, y, playerSymbol))
+                current_game_state['turn'] = 'X' if current_game_state['turn']=='O' else 'O'
+                return True
     return False
 
-def newGameBoard():
+def newGameState():
     return {
         "board" : [["" for _ in range(3)] for _ in range(3)],
-        "players" : dict(), # sessionid to X or O, X or O to sessionid
-        "turn" : None, # player/session id
+        "pid_to_symbol" : dict(), # sessionid to X or O
+        "symbol_to_pid": dict(), #   X or O to sessionid
+        "turn" : 'X', # player/session id or symbol
         "move_hist" : list(),
         "winner": None
     }
 
 def assignSymbols(game_state, player_id):
-    if len(game_state['players']) == 0:
-        game_state['players'][player_id] = "X"
-    elif len(game_state['players']) == 1:
-        game_state['players'][player_id] = "O"
+    if len(game_state['pid_to_symbol']) == 0:
+        game_state['pid_to_symbol'][player_id] = "X"
+        game_state['symbol_to_pid']["X"] = player_id
+    elif len(game_state['pid_to_symbol']) == 1:
+        game_state['pid_to_symbol'][player_id] = "O"
+        game_state['symbol_to_pid']["O"] = player_id

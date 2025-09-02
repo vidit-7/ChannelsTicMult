@@ -22,14 +22,14 @@ const dispboardarr = [zz, zo, zt, oz, oo, ot, tz, to, tt];
 
 moveSocket.onmessage = function (e) {
     const data = JSON.parse(e.data);
-    console.log("Data", data);
+    // console.log("Data", data);
     console.log(data['action']);
     if (data['action'] === "chat_message") {
         const newNode = document.createElement('li');
-        newNode.innerText = `${data['message_was']}`
+        newNode.innerText = `${data['player_id']}\n${data['message_was']}`
         msgdisp.appendChild(newNode);
     }
-    else if (data['action' === "player_moved"]) {
+    else if (data['action'] === "player_moved") {
         onPlayerMove(data);
     }
 }
@@ -45,7 +45,7 @@ const msgdisp = document.querySelector("#msg-disp");
 sendBtn.onclick = function () {
     moveSocket.send(JSON.stringify({
         'action': 'send_chat',
-        'message': msg.value
+        'message_body': msg.value
     }));
     msg.value = ""
 }
@@ -57,19 +57,32 @@ for(let unt of dispboardarr){
             'move_x': String(unt.id).charAt(1),
             'move_y': String(unt.id).charAt(2)
         }
+        moveSocket.send(JSON.stringify(json_dict));
+        // onPlayerMove(data);
     }
 }
 
 function onPlayerMove(data) {
-    if (data['success']) {
-        const x = data['ch_x']
-        const y = data['ch_y']
-        const symbol = data['symbol']
-        const id_sel = `u${x}${y}`;
-        document.querySelector(`#${id_sel}`).innerText = symbol;
+    console.log("received data", data);
+    const expectedPlayer = data['expected_player'];
+    const success = data['success'];
+    const board = data['board'];
+    // const id_sel = `#u${x}${y}`;
+
+    let count = 0;
+    for(let i=0; i<board.length; i++){
+        for(let j=0; j<board[0].length; j++){
+            dispboardarr[count].innerText = board[i][j];
+            count+=1;
+        }
     }
-    else {
-        console.log('invalid move');
+    if(data['winner']){
+        document.querySelector("#result").innerText = data['winner'];
+    }
+    if(expectedPlayer){
+        if(!success){
+            console.log('invalid move');
+        }
     }
 }
 
