@@ -117,3 +117,4 @@ def assignSymbols(game_state, player_id):
     elif len(game_state['pid_to_symbol']) == 1:
         game_state['pid_to_symbol'][player_id] = "O"
         game_state['symbol_to_pid']["O"] = player_id
+

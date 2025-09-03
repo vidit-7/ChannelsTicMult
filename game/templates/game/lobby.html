@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,17 +8,24 @@
 </head>
 <body>
     <h1>Lobby</h1>
+    <div>
+        <h4>Your name</h4>
+        <label for="">Enter your player name: </label>
+        <input type="text" id="playerNameInp">
+    </div>
+    <div>
+        <h4>Create a game room</h4>
+        <label>Room code: </label>
+        <input type="text" id="createRoomInp">
+        <button id="createBtn">Create</button>
+    </div>
+    <div>
+        <h4>Join a game room</h4>
+        <label>Room code: </label>
+        <input type="text" id="joinRoomInp">
+        <button id="joinBtn">Create</button>
+    </div>
 
-    <label>Create Lobby: </label>
-    <input type="text" id="roomInp">
-    <button id="createBtn">Create</button>
-    <script>
-        const createBtn = document.querySelector("#createBtn");
-        const roomInp = document.querySelector("#roomInp");
-        createBtn.onclick = function(){
-            const roomName = roomInp.value;
-            window.location.pathname = `/game/board/${roomName}`;
-        }
-    </script>
+    <script src="{%static 'js/lobby_handler.js'%}"></script>
 </body>
 </html>

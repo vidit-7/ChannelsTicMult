@@ -25,12 +25,13 @@ moveSocket.onmessage = function (e) {
     // console.log("Data", data);
     console.log(data['action']);
     if (data['action'] === "chat_message") {
-        const newNode = document.createElement('li');
-        newNode.innerText = `${data['player_id']}\n${data['message_was']}`
-        msgdisp.appendChild(newNode);
+        onChatMsg(data);
     }
     else if (data['action'] === "player_moved") {
         onPlayerMove(data);
+    }
+    else if(data['action'] === "connection_made"){
+        onRoomConnectionMade(data);
     }
 }
 
@@ -58,7 +59,6 @@ for(let unt of dispboardarr){
             'move_y': String(unt.id).charAt(2)
         }
         moveSocket.send(JSON.stringify(json_dict));
-        // onPlayerMove(data);
     }
 }
 
@@ -76,14 +76,12 @@ function onPlayerMove(data) {
             count+=1;
         }
     }
-    if(data['winner']){
-        document.querySelector("#result").innerText = data['winner'];
-    }
     if(expectedPlayer){
         if(!success){
             console.log('invalid move');
         }
     }
+    checkGameOver(data);
 }
 
 function checkGameOver(data){
@@ -91,4 +89,27 @@ function checkGameOver(data){
         console.log(`game over`);
         document.querySelector("#result").innerText = `Winner: ${data['winner']}`;
     }
+}
+
+function onRoomConnectionMade(data){
+    const chatLog = data['chat_log'];
+    const board = data['board_state'];
+    const winner = data['winner'];
+    console.log(chatLog);
+    for(let chatTuple of chatLog){
+        onChatMsg({'player_name': chatTuple[0], 'message_was': chatTuple[1]});
+    }
+    let count = 0;
+    for(let i=0; i<board.length; i++){
+        for(let j=0; j<board[0].length; j++){
+            dispboardarr[count].innerText = board[i][j];
+            count+=1;
+        }
+    }
+}
+
+function onChatMsg(data){
+    const newNode = document.createElement('li');
+    newNode.innerText = `${data['player_name']}\n${data['message_was']}`
+    msgdisp.appendChild(newNode);
 }
