@@ -14,9 +14,10 @@ const ot = document.querySelector("#u12");
 const tz = document.querySelector("#u20");
 const to = document.querySelector("#u21");
 const tt = document.querySelector("#u22");
-const compfst = document.querySelector("#compfst");
-const unbeatB = document.querySelector("#unbeatable");
-const resDisp = document.querySelector("#result");
+const compfstBtn = document.querySelector("#compfst");
+const winnerDisp = document.querySelector("#result");
+const unbeatBtn = document.querySelector("#unbeatable");
+const resetBtn = document.querySelector("#reset");
 
 const dispboardarr = [zz, zo, zt, oz, oo, ot, tz, to, tt];
 
@@ -32,6 +33,16 @@ moveSocket.onmessage = function (e) {
     }
     else if(data['action'] === "connection_made"){
         onRoomConnectionMade(data);
+    }
+    else if(data['action'] === "player_joined"){
+        displaySysMsg(`${data['player_name']} joined`);
+    }
+    else if(data['action'] === "player_left"){
+        displaySysMsg(`${data['player_name']} left`);
+    }
+    else if(data['action'] === "game_reset"){
+        console.log("game reset signal");
+        onGameReset(data);
     }
 }
 
@@ -51,6 +62,16 @@ sendBtn.onclick = function () {
     msg.value = ""
 }
 
+let resetVal = true;
+resetBtn.onclick = function(){
+    console.log("reset wish");
+    moveSocket.send(JSON.stringify({
+        'action': 'reset_game',
+        'play_again_value': resetVal
+    }));
+    resetVal = !resetVal;
+}
+
 for(let unt of dispboardarr){
     unt.onclick = function() {
         json_dict = {    
@@ -62,10 +83,33 @@ for(let unt of dispboardarr){
     }
 }
 
+function onRoomConnectionMade(data){
+    const chatLog = data['chat_log'];
+    const board = data['board_state'];
+    const winner = data['winner'];
+    console.log(chatLog);
+    for(let chatTuple of chatLog){
+        if(chatTuple[0]=="game_sys"){
+            displaySysMsg(`${chatTuple[1]}`);
+        }
+        else{
+            onChatMsg({'player_name': chatTuple[0], 'message_was': chatTuple[1]});
+        }
+    }
+    let count = 0;
+    for(let i=0; i<board.length; i++){
+        for(let j=0; j<board[0].length; j++){
+            dispboardarr[count].innerText = board[i][j];
+            count+=1;
+        }
+    }
+}
+
 function onPlayerMove(data) {
     console.log("received data", data);
-    const expectedPlayer = data['expected_player'];
-    const success = data['success'];
+    // const expectedPlayer = data['expected_player'];
+    const success = data['success'];    
+
     const board = data['board'];
     // const id_sel = `#u${x}${y}`;
 
@@ -76,35 +120,18 @@ function onPlayerMove(data) {
             count+=1;
         }
     }
-    if(expectedPlayer){
-        if(!success){
-            console.log('invalid move');
-        }
-    }
+    // if(expectedPlayer){
+    //     if(!success){
+    //         console.log('invalid move');
+    //     }
+    // }
     checkGameOver(data);
 }
 
 function checkGameOver(data){
     if(data['game_over']){
         console.log(`game over`);
-        document.querySelector("#result").innerText = `Winner: ${data['winner']}`;
-    }
-}
-
-function onRoomConnectionMade(data){
-    const chatLog = data['chat_log'];
-    const board = data['board_state'];
-    const winner = data['winner'];
-    console.log(chatLog);
-    for(let chatTuple of chatLog){
-        onChatMsg({'player_name': chatTuple[0], 'message_was': chatTuple[1]});
-    }
-    let count = 0;
-    for(let i=0; i<board.length; i++){
-        for(let j=0; j<board[0].length; j++){
-            dispboardarr[count].innerText = board[i][j];
-            count+=1;
-        }
+        winnerDisp.innerText = `Winner: ${data['winner']}`;
     }
 }
 
@@ -112,4 +139,32 @@ function onChatMsg(data){
     const newNode = document.createElement('li');
     newNode.innerText = `${data['player_name']}\n${data['message_was']}`
     msgdisp.appendChild(newNode);
+}
+
+function displaySysMsg(dataStr){
+    const newNode = document.createElement('li');
+    const boldNode = document.createElement('b');
+    boldNode.innerText = `${dataStr}`;
+    newNode.appendChild(boldNode);
+    msgdisp.appendChild(newNode);
+}
+
+function onGameReset(data){
+    console.log(data);
+    // console.log(data['reset_state']);
+    displaySysMsg(`${data['reset_message']}`);
+   
+    if(data['reset_state']){
+        // displaySysMsg(`${data['reset_message']}`);
+        const board = data['board'];
+        winnerDisp.innerText = "";
+        let count = 0;
+        for(let i=0; i<board.length; i++){
+            for(let j=0; j<board[0].length; j++){
+                dispboardarr[count].innerText = board[i][j];
+                count+=1;
+            }
+        }
+        // displaySysMsg("Game has been reset");
+    }
 }

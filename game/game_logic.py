@@ -88,9 +88,8 @@ def checkGameOverWin(game_state):
     
     return (False, None)
 
-def playerMakeMove(current_game_state, x, y, player_id):
+def playerMakeMove(current_game_state, x, y, playerSymbol):
     if(not current_game_state['winner']):
-        playerSymbol = current_game_state['pid_to_symbol'][player_id]
         if current_game_state['turn'] == playerSymbol:
             if checkValidMove(current_game_state['board'], x, y):
                 print("valid move")
@@ -103,18 +102,10 @@ def playerMakeMove(current_game_state, x, y, player_id):
 def newGameState():
     return {
         "board" : [["" for _ in range(3)] for _ in range(3)],
-        "pid_to_symbol" : dict(), # sessionid to X or O
-        "symbol_to_pid": dict(), #   X or O to sessionid
         "turn" : 'X', # player/session id or symbol
         "move_hist" : list(),
         "winner": None
     }
 
-def assignSymbols(game_state, player_id):
-    if len(game_state['pid_to_symbol']) == 0:
-        game_state['pid_to_symbol'][player_id] = "X"
-        game_state['symbol_to_pid']["X"] = player_id
-    elif len(game_state['pid_to_symbol']) == 1:
-        game_state['pid_to_symbol'][player_id] = "O"
-        game_state['symbol_to_pid']["O"] = player_id
+
 
