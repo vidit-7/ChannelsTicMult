@@ -1,0 +1,29 @@
+*{
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+}
+
+button{
+    border: none;
+    background: linear-gradient(rgb(34, 34, 34), rgb(9, 3, 14));
+    font-size: 16px;
+    padding: 0.4em 0.6em;
+    color: white;
+    border-radius: 0.8em;
+}
+
+#joinRoomInp, #playerNameInp{
+    font-size: 16px;
+    padding: 0.2em;
+    border: 1px solid gray;
+}
+
+button:hover{
+    cursor: pointer;
+}
+
+.container>*{
+    margin: 1em;
+}

@@ -24,6 +24,9 @@ def game_board(request, room_name):
 
     return render(request, 'game/board.html', {'room_name': room_name})
 
+def against_comp(request):
+    return render(request, 'game/board_computer.html')
+
 def change_playername(request):
     if request.method == "POST":
         new_player_name = request.POST.get('player_name')

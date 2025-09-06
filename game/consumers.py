@@ -127,6 +127,7 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
                 })) 
                 return
             if game_state['winner']!=None:
+                print("game is over")
                 self.send(json.dumps({
                     'action': 'move_failed',
                     'fail_msg': 'Game over'

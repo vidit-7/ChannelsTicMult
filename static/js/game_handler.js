@@ -23,7 +23,7 @@ const dispboardarr = [zz, zo, zt, oz, oo, ot, tz, to, tt];
 
 moveSocket.onmessage = function (e) {
     const data = JSON.parse(e.data);
-    // console.log("Data", data);
+    console.log("Data", data);
     console.log(data['action']);
     if (data['action'] === "chat_message") {
         onChatMsg(data);
@@ -50,9 +50,9 @@ moveSocket.onclose = function (e) {
     console.error("move socket closed unexp");
 }
 
-const msg = document.querySelector("#msg");
+const msg = document.querySelector("#msgInp");
 const sendBtn = document.querySelector("#sendBtn");
-const msgdisp = document.querySelector("#msg-disp");
+const msgdisp = document.querySelector("#msgDisp");
 
 sendBtn.onclick = function () {
     moveSocket.send(JSON.stringify({
@@ -136,16 +136,18 @@ function checkGameOver(data){
 }
 
 function onChatMsg(data){
-    const newNode = document.createElement('li');
-    newNode.innerText = `${data['player_name']}\n${data['message_was']}`
+    const newNode = document.createElement('div');
+    newNode.innerText = `${data['player_name']}: ${data['message_was']}`
+    newNode.classList.add('chatMessage');
     msgdisp.appendChild(newNode);
 }
 
 function displaySysMsg(dataStr){
-    const newNode = document.createElement('li');
+    const newNode = document.createElement('div');
     const boldNode = document.createElement('b');
     boldNode.innerText = `${dataStr}`;
     newNode.appendChild(boldNode);
+    newNode.classList.add('chatMessage');
     msgdisp.appendChild(newNode);
 }
 
@@ -165,6 +167,7 @@ function onGameReset(data){
                 count+=1;
             }
         }
+        resetVal = true;
         // displaySysMsg("Game has been reset");
     }
 }
