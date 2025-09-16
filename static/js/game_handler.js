@@ -50,16 +50,16 @@ moveSocket.onclose = function (e) {
     console.error("move socket closed unexp");
 }
 
-const msg = document.querySelector("#msgInp");
+const msgInp = document.querySelector("#msgInp");
 const sendBtn = document.querySelector("#sendBtn");
 const msgdisp = document.querySelector("#msgDisp");
 
 sendBtn.onclick = function () {
     moveSocket.send(JSON.stringify({
         'action': 'send_chat',
-        'message_body': msg.value
+        'message_body': msgInp.value
     }));
-    msg.value = ""
+    msgInp.value = ""
 }
 
 let resetVal = true;
@@ -171,3 +171,25 @@ function onGameReset(data){
         // displaySysMsg("Game has been reset");
     }
 }
+
+
+function scrollToLastChatMsg(){
+    // messageInp.style.height = "auto";
+    let lastMsg = msgdisp.lastElementChild;
+    if(lastMsg!=null){
+        lastMsg.scrollIntoView({behaviour: "instant", block:"end"});
+    }
+}
+
+msgInp.addEventListener("input", function(){
+    this.style.height = "auto";
+    if(this.scrollHeight<=180){
+        this.style.height = `${this.scrollHeight}px`;
+    }
+    else{
+        this.style.height = "180px";
+    }
+});
+
+let chatObserver = new MutationObserver(scrollToLastChatMsg);
+chatObserver.observe(msgdisp, {childList: true, subtree: true});

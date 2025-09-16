@@ -1,40 +1,42 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tic Tac Toe | Lobby</title>
     <link rel="stylesheet" href="{%static 'css/lobbyStyle.css'%}">
 </head>
+
 <body>
     <div class="container">
-
         <h1>Lobby</h1>
         <div>
-        <h4>Your name</h4>
-        <label for="">Enter your player name: </label>
-        <input type="text" id="playerNameInp">
+            <a href="{% url 'gameAgainstComp'%}">
+                <button id="playVsComp">Play against computer</button>
+            </a>
+        </div>
+        <div>
+            <h4>Your name</h4>
+            <label for="">Enter your name: </label>
+            <input type="text" id="playerNameInp" placeholder="player">
+        </div>
+        <div>
+            <h4>Create a game room</h4>
+            <label>Room code: </label>
+            <!-- <input type="text" id="createRoomInp"> -->
+            <button id="createBtn">Create</button>
+        </div>
+        <div>
+            <h4>Join a game room</h4>
+            <label>Room code: </label>
+            <input type="text" id="joinRoomInp">
+            <button id="joinBtn">Join</button>
+        </div>
     </div>
-    <div>
-        <a href="{% url 'gameAgainstComp'%}">
-            <button id="playVsComp">Play against computer</button>
-        </a>
-    </div>
-    <div>
-        <h4>Create a game room</h4>
-        <label>Room code: </label>
-        <!-- <input type="text" id="createRoomInp"> -->
-        <button id="createBtn">Create</button>
-    </div>
-    <div>
-        <h4>Join a game room</h4>
-        <label>Room code: </label>
-        <input type="text" id="joinRoomInp">
-        <button id="joinBtn">Join</button>
-    </div>
-</div>
-    
+
     <script src="{%static 'js/lobby_handler.js'%}"></script>
 </body>
+
 </html>
