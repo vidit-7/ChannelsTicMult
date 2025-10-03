@@ -35,10 +35,10 @@ moveSocket.onmessage = function (e) {
         onRoomConnectionMade(data);
     }
     else if(data['action'] === "player_joined"){
-        displaySysMsg(`${data['player_name']} joined`);
+        onPlayerJoinDsp(data);
     }
     else if(data['action'] === "player_left"){
-        displaySysMsg(`${data['player_name']} left`);
+        onPlayerLeaveDsp(data);
     }
     else if(data['action'] === "game_reset"){
         console.log("game reset signal");
@@ -81,6 +81,28 @@ for(let unt of dispboardarr){
         }
         moveSocket.send(JSON.stringify(json_dict));
     }
+}
+
+const playerInfo1 = document.querySelector("#pl1symb");
+const playerInfo2 = document.querySelector("#pl2symb");
+
+function onPlayerJoinDsp(data){
+    const playerName = data['player_name'];
+    displaySysMsg(`${playerName} joined`);
+    console.log(data['player_symbols'])
+    const pl1 = data['player_symbols']["X"];
+    const pl2 = data['player_symbols']["O"];
+    if(pl1){
+        playerInfo1.innerText = pl1;
+    }
+    if(pl2){
+        playerInfo2.innerText = pl2;
+    }
+}
+function onPlayerLeaveDsp(data){
+    const playerName = data['player_name'];
+    displaySysMsg(`${playerName} left`);
+    
 }
 
 function onRoomConnectionMade(data){

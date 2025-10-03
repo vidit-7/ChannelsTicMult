@@ -33,6 +33,7 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
                 'game_state' : game_logic.newGameState(),
                 'symbol_to_pid': dict(),
                 'pid_to_symbol': dict(),
+                'symbol_to_pname': dict(),
                 'winner_log': list()
             }
         # assign users
@@ -65,7 +66,8 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'player_joined_room',
-                    'player_name': player_joined
+                    'player_name': player_joined,
+                    'player_symbols': room['symbol_to_pname']
                 }
             )
         
@@ -79,7 +81,8 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             {
                 'type': 'player_left_room',
-                'player_name': player_left
+                'player_name': player_left,
+                'player_symbols': rooms_state[self.room_name]['symbol_to_pname']
             }
         )
     
@@ -299,16 +302,20 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
         
     async def player_joined_room(self, event):
         player_name = event['player_name']
+        player_symbols = event['player_symbols']
         await self.send(json.dumps({
             'action': 'player_joined',
-            'player_name': player_name
+            'player_name': player_name,
+            'player_symbols' : player_symbols
         }))
 
     async def player_left_room(self, event):
         player_name = event['player_name']
+        player_symbols = event['player_symbols']
         await self.send(json.dumps({
             'action': 'player_left',
-            'player_name': player_name
+            'player_name': player_name,
+            'player_symbols' : player_symbols
         }))
 
 def assignPlayerNames(room, player_id, base_player_name):
@@ -346,12 +353,15 @@ def bothReadyToReset(players):
     return False
         
 def assignSymbols(room, player_id):
+    pname = room['players'][player_id]['name']
     if len(room['pid_to_symbol']) == 0:
         room['pid_to_symbol'][player_id] = "X"
         room['symbol_to_pid']["X"] = player_id
+        room['symbol_to_pname']["X"] = pname
     elif len(room['pid_to_symbol']) == 1:
         room['pid_to_symbol'][player_id] = "O"
         room['symbol_to_pid']["O"] = player_id
+        room['symbol_to_pname']["O"] = pname
     
 def removeSymbols(room, player_id):
     if len(room['pid_to_symbol']) == 0:
