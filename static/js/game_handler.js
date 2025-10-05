@@ -4,7 +4,6 @@ const moveSocket = new WebSocket(url);
 
 document.querySelector("#game_code_disp").innerText = `Game Code: ${room_name}`;
 
-
 const zz = document.querySelector("#u00");
 const zo = document.querySelector("#u01");
 const zt = document.querySelector("#u02");
@@ -30,6 +29,9 @@ moveSocket.onmessage = function (e) {
     }
     else if (data['action'] === "player_moved") {
         onPlayerMove(data);
+    }
+    else if(data['action'] === "move_timer_over"){
+        checkGameOver(data)
     }
     else if(data['action'] === "connection_made"){
         onRoomConnectionMade(data);
@@ -94,15 +96,18 @@ function onPlayerJoinDsp(data){
     const pl2 = data['player_symbols']["O"];
     if(pl1){
         playerInfo1.innerText = pl1;
+        playerInfo1.classList.add(playerName.replace('#','_'));
     }
     if(pl2){
         playerInfo2.innerText = pl2;
+        playerInfo2.classList.add(playerName.replace('#','_'));
     }
 }
 function onPlayerLeaveDsp(data){
     const playerName = data['player_name'];
     displaySysMsg(`${playerName} left`);
-    
+    // const plCls = playerName.replace('#','_');
+    // document.querySelector(`.${plCls}`).innerText = `${playerName} disconnected`;
 }
 
 function onRoomConnectionMade(data){
@@ -194,6 +199,12 @@ function onGameReset(data){
     }
 }
 
+// timer and turn handler
+
+function timerAndTurnHandler(turn, player, timeLeft){
+    notTurn = (turn=="X") ? "O":"X";
+    
+}
 
 function scrollToLastChatMsg(){
     // messageInp.style.height = "auto";
@@ -215,3 +226,6 @@ msgInp.addEventListener("input", function(){
 
 let chatObserver = new MutationObserver(scrollToLastChatMsg);
 chatObserver.observe(msgdisp, {childList: true, subtree: true});
+
+
+
