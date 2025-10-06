@@ -30,6 +30,7 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
                 'players' : dict(), # {sessionid: {name: username, reset_wish = }}
                 'chat_log': list(), 
                 'move_timer_task' : None,
+                'next_move_time_limit' : None,
                 # 'room_timer' : time.time() + 1800, # half an hour
                 'game_state' : game_logic.newGameState(),
                 'symbol_to_pid': dict(),
@@ -69,7 +70,8 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
                     'type': 'player_joined_room',
                     'player_name': player_joined,
                     'player_symbols': room['symbol_to_pname'],
-                    'turn': room['game_state']['turn']
+                    'turn': room['game_state']['turn'],
+                    'next_move_time_limit': room['next_move_time_limit']
                 }
             )
         
@@ -167,6 +169,7 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
                 # start new timer for the other player on successful move
                 if room['move_timer_task'] != None and not room['move_timer_task'].done():
                     room['move_timer_task'].cancel()
+                    room['next_move_time_limit'] = None
                 # create the timer task after checking if the game is over
 
                 # check if game is over
@@ -178,6 +181,7 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
 
                 game_over = gameOver[0]
                 if gameOver[0]:
+                    print(room)
                     if gameOver[1] != "Tie":
                         winner_id = room['symbol_to_pid'][gameOver[1]]
                         winner_name = room['players'][winner_id]['name']
@@ -188,6 +192,7 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
                 # only start new timer if game is not over
                 else:
                     room['move_timer_task'] = asyncio.create_task(self.move_timer_coroutine())
+                    room['next_move_time_limit'] = round((time.time() + 10) * 1000)
 
                 await self.channel_layer.group_send(
                     self.room_group_name,
@@ -198,6 +203,7 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
                         'turn': room['game_state']['turn'],
                         'game_over': game_over,
                         'winner': winner_msg,
+                        'next_move_time_limit' : room['next_move_time_limit']
                         # 'player_id': self.player_id,
                         # 'move_x': int(move_x),
                         # 'move_y': int(move_y),
@@ -232,9 +238,13 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
                 for player_info in room['players'].values():
                     player_info['reset_wish'] = False
                 room['game_state'] = game_logic.newGameState()
+
+                # reset timer details
                 if room['move_timer_task'] !=None:
                     room['move_timer_task'].cancel()
                     room['move_timer_task'] = None
+                room['next_move_time_limit'] = None
+
                 fresh_game_state = room['game_state']
                 print("reset", fresh_game_state)
                 board = fresh_game_state['board']
@@ -246,6 +256,8 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
                         'type': 'play_again_reset',
                         'reset_state': True,
                         'reset_message': reset_msg_disp,
+                        'turn': fresh_game_state['turn'],
+                        'next_move_time_limit': room['next_move_time_limit'],
                         'board': board,
                         'winner': winner
                     }
@@ -285,6 +297,7 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
         game_over = event['game_over']
         winner = event['winner']
         turn = event['turn']
+        next_move_time_limit = event['next_move_time_limit']
 
         print(updated_game_state)
 
@@ -293,6 +306,7 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
             # 'expected_player': expectedPlayer,
             'board' : updated_game_state['board'],
             'turn': turn,
+            'next_move_time_limit': next_move_time_limit,
             'game_over':  game_over,
             'winner' : winner
         }
@@ -306,7 +320,6 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
     async def move_timer_coroutine(self):
         if rooms_state[self.room_name]['game_state']['winner'] != None:
             return
-        
         await asyncio.sleep(10)
         room = rooms_state[self.room_name]
         game_state = room['game_state']
@@ -363,6 +376,8 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
             winner = event['winner']
             send_dict['board'] = fresh_board
             send_dict['winner'] = winner
+            send_dict['turn'] = event['turn']
+            send_dict['next_move_time_limit'] = event['next_move_time_limit']
         
         await self.send(json.dumps(send_dict))
         
@@ -371,11 +386,13 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
         player_name = event['player_name']
         player_symbols = event['player_symbols']
         turn = event['turn']
+        next_move_time_limit = event['next_move_time_limit']
         await self.send(json.dumps({
             'action': 'player_joined',
             'player_name': player_name,
             'player_symbols' : player_symbols,
-            'turn': turn
+            'turn': turn,
+            'next_move_time_limit': next_move_time_limit
         }))
 
     async def player_left_room(self, event):

@@ -22,7 +22,7 @@ const dispboardarr = [zz, zo, zt, oz, oo, ot, tz, to, tt];
 
 moveSocket.onmessage = function (e) {
     const data = JSON.parse(e.data);
-    console.log("Data", data);
+    // console.log("Data", data);
     console.log(data['action']);
     if (data['action'] === "chat_message") {
         onChatMsg(data);
@@ -102,6 +102,7 @@ function onPlayerJoinDsp(data){
         playerInfo2.innerText = pl2;
         playerInfo2.classList.add(playerName.replace('#','_'));
     }
+    turnDispHandler(data);
 }
 function onPlayerLeaveDsp(data){
     const playerName = data['player_name'];
@@ -152,14 +153,19 @@ function onPlayerMove(data) {
     //         console.log('invalid move');
     //     }
     // }
-    checkGameOver(data);
+    const isGameOver = checkGameOver(data);
+    if(!isGameOver){
+        turnDispHandler(data);
+    }
 }
 
 function checkGameOver(data){
     if(data['game_over']){
         console.log(`game over`);
         winnerDisp.innerText = `Winner: ${data['winner']}`;
+        return true;
     }
+    return false;
 }
 
 function onChatMsg(data){
@@ -196,14 +202,69 @@ function onGameReset(data){
         }
         resetVal = true;
         // displaySysMsg("Game has been reset");
+        turnDispHandler(data);
     }
 }
 
 // timer and turn handler
+let timerIntervalGb = null;
+// document.querySelector('#X_plDisp').style.border = "4px solid black";
+function turnDispHandler(data){
+    const turn = data['turn']
+    const notTurn = (turn=="X") ? "O":"X";
+    console.log("turn not turn", turn, notTurn);
+    const activePlayerDisp = document.querySelector(`#${turn}_plDisp`);
+    const waitingPlayerDist = document.querySelector(`#${notTurn}_plDisp`);
+    waitingPlayerDist.style.border = "4px solid gray";
+    activePlayerDisp.style.border = "4px solid black";
 
-function timerAndTurnHandler(turn, player, timeLeft){
-    notTurn = (turn=="X") ? "O":"X";
+    // timerHandler(turn, notTurn, data['next_move_time_limit']);
+    const activeTimerDisp = activePlayerDisp.querySelector(".timerDisplay");
+    const waitingTimerDisp = waitingPlayerDist.querySelector(".timerDisplay");
+
+    activeTimerDisp.style.border = '2px solid red';
+    activeTimerDisp.style.backgroundColor = "#ee8888";
     
+    if(timerIntervalGb!=null){
+        clearInterval(timerIntervalGb);
+    }
+    waitingTimerDisp.innerText = "--:--:--";
+    waitingTimerDisp.style.border = '2px solid gray';
+    waitingTimerDisp.style.backgroundColor = "white";
+
+    const nextMoveTimeLimit = data['next_move_time_limit'];
+    if(nextMoveTimeLimit!=null){
+        // let dateTimeObj = new Date();
+        // const currentTime = dateTimeObj.getTime();
+        const currentTime = Date.now();
+        console.log(turn, nextMoveTimeLimit, currentTime);
+        // const remainingTime = nextMoveTimeLimit-currentTime;
+
+        if(currentTime>=nextMoveTimeLimit){
+            activeTimerDisp.innerText = "--:--:--";
+            console.error(`Time conflict error ${nextMoveTimeLimit} ${currentTime}`);
+            return;
+        }
+    
+        let currentTimeMs = currentTime;
+        timerIntervalGb = setInterval(()=>{
+            currentTimeMs = Date.now();
+            if(currentTimeMs>=nextMoveTimeLimit){
+                clearInterval(timerIntervalGb);
+                activeTimerDisp.innerText = '00:00:00';
+            }
+            else{
+                activeTimerDisp.innerText = timerConvertHelper(nextMoveTimeLimit-currentTimeMs);
+            }
+        }, 10);
+    }
+}
+
+function timerConvertHelper(timeInMs) {
+    const millisecs =(Math.floor((timeInMs%1000)/10)).toString().padStart(2, '0'); 
+    const secs = (Math.floor(timeInMs/1000)%60).toString().padStart(2, '0');
+    const mins = (Math.floor(timeInMs/(1000*60))%60).toString().padStart(2, '0');
+    return `${mins}:${secs}:${millisecs}`;
 }
 
 function scrollToLastChatMsg(){
