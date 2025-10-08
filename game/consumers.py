@@ -128,16 +128,16 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
             game_state = room['game_state']
             
             if len(room['players']) < 2:
-                self.send(json.dumps({
+                await self.send(text_data=json.dumps({
                     'action': 'move_failed',
                     'fail_msg': 'Wait for your opponent to join'
                 })) 
                 return
             if game_state['winner']!=None:
                 print("game is over")
-                self.send(json.dumps({
+                await self.send(text_data=json.dumps({
                     'action': 'move_failed',
-                    'fail_msg': 'Game over'
+                    'fail_msg': 'Game is over'
                 })) 
                 return
             
@@ -146,7 +146,7 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
 
             if self.player_id != expected_player_id:
                 print("Not your turn")
-                self.send(json.dumps({
+                await self.send(text_data=json.dumps({
                     'action': 'move_failed',
                     'fail_msg': 'Not your turn'
                 })) 
@@ -154,10 +154,10 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
 
             if not isValidMove(move_x, move_y):
                 print("invalid move index")
-                self.send(json.dumps({
-                    'action': 'move_failed',
-                    'fail_msg': 'Invalid move'
-                })) 
+                # await self.send(text_data=json.dumps({
+                #     'action': 'move_failed',
+                #     'fail_msg': 'Invalid move'
+                # })) 
                 return
 
             moveMade = game_logic.playerMakeMove(game_state, int(move_x), int(move_y), playerSymbol)

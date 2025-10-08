@@ -61,7 +61,7 @@
 
 .chatMessage{
     background-color: gainsboro;
-    max-width: 25vw;
+    width: 25vw;
     padding: 0.5em;
     margin: 0.2em;
     border-radius: 5px;
@@ -74,6 +74,7 @@
     justify-content: space-between;
     align-items: baseline;
     /* padding: 1.2em; */
+    width: 600px;
 }
 
 .plsymb{
@@ -167,10 +168,37 @@ button:hover{
     border-radius: 10%;
 }
 
+#info_selfPlayer{
+    font-size: 16px;
+    font-weight: bold;
+    overflow-wrap: break-word;
+    margin: 5px;
+    padding: 0.2em;
+    color: goldenrod;
+}
+
+.infoTitleCont{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.gameCodeCont{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px 0px;
+}
+
 @media screen and (max-width: 600px){
     .unit{
         width: 100px;
         height: 100px;
+    }
+
+    .player_symbol_disp{
+        width: 400px;
     }
 
     .container_main{

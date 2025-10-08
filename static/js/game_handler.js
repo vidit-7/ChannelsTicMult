@@ -2,7 +2,22 @@ const room_name = JSON.parse(document.getElementById('room_name').textContent);
 const url = `ws://${window.location.host}/ws/move/${room_name}/`;
 const moveSocket = new WebSocket(url);
 
-document.querySelector("#game_code_disp").innerText = `Game Code: ${room_name}`;
+const gameCodeDisp = document.querySelector("#game_code_disp");
+const gameCodeCpyBtn = document.querySelector("#copyCodeBtn");
+gameCodeDisp.innerText = `${room_name}`;
+gameCodeCpyBtn.onclick = function(){
+    const gameCode = gameCodeDisp.innerText;
+    navigator.clipboard.writeText(gameCode);
+    gameCodeCpyBtn.disabled = true;
+    gameCodeCpyBtn.style.opacity = 0.65;
+    gameCodeCpyBtn.innerText = "copied";
+    setTimeout(()=>{
+        gameCodeCpyBtn.disabled = false;
+        gameCodeCpyBtn.style.opacity = 1;
+        gameCodeCpyBtn.innerText = "Copy code";
+    }, 2000);
+}
+
 
 const zz = document.querySelector("#u00");
 const zo = document.querySelector("#u01");
@@ -45,6 +60,9 @@ moveSocket.onmessage = function (e) {
     else if(data['action'] === "game_reset"){
         console.log("game reset signal");
         onGameReset(data);
+    }
+    else if(data['action'] === "move_failed"){
+        onMoveFailed(data);
     }
 }
 
@@ -92,15 +110,15 @@ function onPlayerJoinDsp(data){
     const playerName = data['player_name'];
     displaySysMsg(`${playerName} joined`);
     console.log(data['player_symbols'])
-    const pl1 = data['player_symbols']["X"];
-    const pl2 = data['player_symbols']["O"];
-    if(pl1){
-        playerInfo1.innerText = pl1;
-        playerInfo1.classList.add(playerName.replace('#','_'));
+    const pl1_name = data['player_symbols']["X"];
+    const pl2_name = data['player_symbols']["O"];
+    if(pl1_name){
+        playerInfo1.innerText = pl1_name;
+        // playerInfo1.classList.add(playerName.replace('#','_'));
     }
-    if(pl2){
-        playerInfo2.innerText = pl2;
-        playerInfo2.classList.add(playerName.replace('#','_'));
+    if(pl2_name){
+        playerInfo2.innerText = pl2_name;
+        // playerInfo2.classList.add(playerName.replace('#','_'));
     }
     turnDispHandler(data);
 }
@@ -159,20 +177,26 @@ function onPlayerMove(data) {
     }
 }
 
+function onMoveFailed(data){
+    console.log(data);
+    const failMsg = data['fail_msg'];
+    const infoDiv = document.querySelector("#info_selfPlayer");
+    infoDiv.innerText = failMsg;
+    setTimeout(()=>{
+        infoDiv.innerText = '';
+    }, 2500);
+}
+
 function checkGameOver(data){
     if(data['game_over']){
         console.log(`game over`);
         winnerDisp.innerText = `Winner: ${data['winner']}`;
+        if(timerIntervalGb != null){
+            clearInterval(timerIntervalGb);
+        }
         return true;
     }
     return false;
-}
-
-function onChatMsg(data){
-    const newNode = document.createElement('div');
-    newNode.innerText = `${data['player_name']}: ${data['message_was']}`
-    newNode.classList.add('chatMessage');
-    msgdisp.appendChild(newNode);
 }
 
 function displaySysMsg(dataStr){
@@ -202,8 +226,24 @@ function onGameReset(data){
         }
         resetVal = true;
         // displaySysMsg("Game has been reset");
-        turnDispHandler(data);
+        gameResetTimerHelper();
     }
+}
+
+function gameResetTimerHelper(){
+    if(timerIntervalGb != null) {clearInterval(timerIntervalGb);}
+        const Xdisp = document.querySelector(`#X_plDisp`);
+        const Odisp = document.querySelector(`#O_plDisp`);
+        Xdisp.style.border = "4px solid black";
+        Odisp.style.border = "4px solid gray";
+        Xtimer = Xdisp.querySelector('.timerDisplay');
+        Otimer = Odisp.querySelector('.timerDisplay');
+        Xtimer.innerText = '--:--:--';
+        Otimer.innerText = '--:--:--';
+        Xtimer.style.border = '2px solid red';
+        Xtimer.style.backgroundColor = "#ee8888";
+        Otimer.style.border = '2px solid gray';
+        Otimer.style.backgroundColor = "white";
 }
 
 // timer and turn handler
@@ -212,7 +252,7 @@ let timerIntervalGb = null;
 function turnDispHandler(data){
     const turn = data['turn']
     const notTurn = (turn=="X") ? "O":"X";
-    console.log("turn not turn", turn, notTurn);
+    // console.log("turn not turn", turn, notTurn);
     const activePlayerDisp = document.querySelector(`#${turn}_plDisp`);
     const waitingPlayerDist = document.querySelector(`#${notTurn}_plDisp`);
     waitingPlayerDist.style.border = "4px solid gray";
@@ -265,6 +305,13 @@ function timerConvertHelper(timeInMs) {
     const secs = (Math.floor(timeInMs/1000)%60).toString().padStart(2, '0');
     const mins = (Math.floor(timeInMs/(1000*60))%60).toString().padStart(2, '0');
     return `${mins}:${secs}:${millisecs}`;
+}
+
+function onChatMsg(data){
+    const newNode = document.createElement('div');
+    newNode.innerText = `${data['player_name']}: ${data['message_was']}`
+    newNode.classList.add('chatMessage');
+    msgdisp.appendChild(newNode);
 }
 
 function scrollToLastChatMsg(){

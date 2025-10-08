@@ -12,8 +12,12 @@
 <body>
     <div class="container_main">
         <div class="sideBar">
-            <h1>Game</h1>
-            <h2 id="game_code_disp"></h2>
+            <!-- <h1>Game</h1> -->
+            <h2>Game Code</h2>
+            <div class="gameCodeCont">
+                <h2 id="game_code_disp"></h2>
+                <button id="copyCodeBtn">Copy code</button>
+            </div>
             <button id="reset">reset</button>
             <div id="msgDisp"></div>
             <div class="messageGroup">
@@ -28,7 +32,10 @@
                     <div id="pl1symb">Haven't joined</div>
                     <div id="pl1Timer" class="timerDisplay">--:--:--</div>
                 </div>
-                <h2>Tic tac Toe</h2>
+                <div class="infoTitleCont">
+                    <h2>Tic tac Toe</h2>
+                    <div id="info_selfPlayer"></div>
+                </div>
                 <div id="O_plDisp" class="plsymb">
                     <h5>O</h5> 
                     <div id="pl2symb">Haven't joined</div>
