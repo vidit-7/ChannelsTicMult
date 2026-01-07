@@ -1,4 +1,4 @@
-const room_name = JSON.parse(document.getElementById('room_name').textContent);
+const room_name = JSON.parse(document.getElementById('room_code').textContent);
 const url = `ws://${window.location.host}/ws/move/${room_name}/`;
 const moveSocket = new WebSocket(url);
 

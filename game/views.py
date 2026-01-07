@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-import json
-import uuid
+from django.utils import timezone
+from .models import GameRoom
+import json, uuid, datetime
 
 # Create your views here.
 
@@ -18,11 +19,31 @@ def game_lobby(request):
         )
     return response
 
-def game_board(request, room_name):
+def create_room(request):
+    if request.method=='POST':
+        # # cleanup
+        # GameRoom.objects.filter(expires_at__lt<datetime.now()).delete()
+
+        game_code = f'room_{uuid.uuid4().hex[:8]}'
+
+        room_obj = GameRoom.objects.create(
+            room_code=game_code,
+            expires_at = timezone.now() + datetime.timedelta(minutes=30)
+        )
+
+        return JsonResponse({'success': True, 'game_code': room_obj.room_code})
+
+
+def game_board(request, room_code):
     if not request.COOKIES.get('temp_player_id'):
         return redirect('gameLobby')
-
-    return render(request, 'game/board.html', {'room_name': room_name})
+    print(room_code)
+    try:
+        room_obj = GameRoom.objects.get(room_code=room_code)
+        return render(request, 'game/board.html', {'room_code': room_code})
+    except:
+        print('room not found vw')
+        return redirect('gameLobby')
 
 def against_comp(request):
     return render(request, 'game/board_computer.html')

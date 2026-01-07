@@ -1,9 +1,11 @@
 import json
 from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
 from asgiref.sync import async_to_sync
 import time
 import asyncio
 from . import game_logic
+from .models import GameRoom
 # import uuid
 import math
 import random
@@ -13,7 +15,11 @@ rooms_state = dict() # key room_group_name or room_name :
 class GameMoveConsumer(AsyncWebsocketConsumer):
     
     async def connect(self):
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
+        temp_room_name = self.scope['url_route']['kwargs']['room_name']
+        if(check_room_code_exists(temp_room_name) == None):
+            print('room does not exist')
+            await self.close()
+        self.room_name = temp_room_name
         self.room_group_name = f'board_{self.room_name}'
 
         cookies = self.scope['cookies']
@@ -457,3 +463,14 @@ def removeSymbols(room, player_id):
     elif len(room['pid_to_symbol']) == 1:
         room['pid_to_symbol'][player_id] = None
         room['symbol_to_pid']["O"] = None
+
+
+@database_sync_to_async
+def check_room_code_exists(room_code):
+    room_obj = None
+    try:
+        room_obj = GameRoom.objects.get(room_code=room_code)
+    except:
+        room_obj = None
+    
+    return room_obj

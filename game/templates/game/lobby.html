@@ -34,8 +34,10 @@
             <input type="text" id="joinRoomInp">
             <button id="joinBtn">Join</button>
         </div>
+        <div id="infomsg"></div>
     </div>
 
+    {% csrf_token %}
     <script src="{%static 'js/lobby_handler.js'%}"></script>
 </body>
 
