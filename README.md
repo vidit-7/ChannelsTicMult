@@ -35,8 +35,8 @@ A browser-based, real-time Tic Tac Toe game built with **Django Channels** and *
 
 6. Open your browser at http://127.0.0.1:8000 and enjoy the game!
 
-Usage
-Create or join a game room
-Play against another player or AI
-Use chat to talk to the opponent for interactive gameplay
-Reset game when both players agree
+## Usage
+- Create or join a game room
+- Play against another player or computer
+- Use chat to talk to the opponent for interactive gameplay
+- Reset game when both players agree
