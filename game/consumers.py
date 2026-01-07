@@ -105,182 +105,209 @@ class GameMoveConsumer(AsyncWebsocketConsumer):
         # current_game_state = rooms_state[self.room_name]['game_state']
         # player_symbol = rooms_state[self.room_name]['game_state']['players'][player_id]
 
+        handlers = {
+            "send_chat": self.handle_chat,
+            "make_move": self.handle_move,
+            "reset_game": self.handle_reset
+        }
 
-        if message_action == 'send_chat':
-            message_data = text_data_json['message_body']
-            message_data_clean = message_data.strip()
-            if not message_data_clean:
-                return
+        handler_func = handlers[message_action]
+        if handler_func:
+            await handler_func(text_data_json)
 
-            room = rooms_state[self.room_name]
-            room['chat_log'].append((sender_player_name, message_data_clean))
-
-            print(room['chat_log'])
+        # if message_action == 'send_chat':
+           
+        # elif message_action == 'make_move':
+           
+        # elif message_action == 'reset_game':
             
+
+    async def handle_chat(self, text_data_json):
+        room = rooms_state[self.room_name]
+        sender_player_name = room['players'][self.player_id]['name']
+
+        message_data = text_data_json['message_body']
+        message_data_clean = message_data.strip()
+        if not message_data_clean:
+            return
+
+        room = rooms_state[self.room_name]
+        room['chat_log'].append((sender_player_name, message_data_clean))
+
+        print(room['chat_log'])
+        
+        await self.channel_layer.group_send(
+            self.room_group_name, 
+            {
+                'type': 'board_message',
+                'player_id': self.player_id,
+                'player_name': sender_player_name,
+                'message_data': message_data_clean
+            }
+        )
+
+    async def handle_move(self, text_data_json):
+        room = rooms_state[self.room_name]
+        sender_player_name = room['players'][self.player_id]['name']
+        
+        # player_ready = room['players'][self.player_id]['reset_wish']
+            
+        move_x = text_data_json['move_x']
+        move_y = text_data_json['move_y']
+        game_state = room['game_state']
+        
+        if len(room['players']) < 2:
+            await self.send(text_data=json.dumps({
+                'action': 'move_failed',
+                'fail_msg': 'Wait for your opponent to join'
+            })) 
+            return
+        if game_state['winner']!=None:
+            print("game is over")
+            await self.send(text_data=json.dumps({
+                'action': 'move_failed',
+                'fail_msg': 'Game is over'
+            })) 
+            return
+        
+        expected_player_id = room['symbol_to_pid'][game_state['turn']]
+        playerSymbol = room['pid_to_symbol'][self.player_id]
+
+        if self.player_id != expected_player_id:
+            print("Not your turn")
+            await self.send(text_data=json.dumps({
+                'action': 'move_failed',
+                'fail_msg': 'Not your turn'
+            })) 
+            return
+
+        if not isValidMove(move_x, move_y):
+            print("invalid move index")
+            # await self.send(text_data=json.dumps({
+            #     'action': 'move_failed',
+            #     'fail_msg': 'Invalid move'
+            # })) 
+            return
+
+        moveMade = game_logic.playerMakeMove(game_state, int(move_x), int(move_y), playerSymbol)
+
+        winner_name = None
+        winner_msg = ""
+        game_over = False
+        if moveMade:
+            # start new timer for the other player on successful move
+            if room['move_timer_task'] != None and not room['move_timer_task'].done():
+                room['move_timer_task'].cancel()
+                room['next_move_time_limit'] = None
+            # create the timer task after checking if the game is over
+
+            # check if game is over
+            updated_game_state = room['game_state']
+            gameOver = game_logic.checkGameOverWin(updated_game_state)
+
+            # # timer created after setting winner details
+            # room['move_timer_task'] = asyncio.create_task(self.move_timer_coroutine())
+
+            game_over = gameOver[0]
+            if gameOver[0]:
+                print(room)
+                if gameOver[1] != "Tie":
+                    winner_id = room['symbol_to_pid'][gameOver[1]]
+                    winner_name = room['players'][winner_id]['name']
+                else:
+                    winner_name = "Tie"
+                winner_msg = f"{winner_name} {playerSymbol if winner_name!='Tie' else ''}"
+                room['winner_log'].append(winner_name)
+            # only start new timer if game is not over
+            else:
+                room['move_timer_task'] = asyncio.create_task(self.move_timer_coroutine())
+                room['next_move_time_limit'] = round((time.time() + 10) * 1000)
+
             await self.channel_layer.group_send(
-                self.room_group_name, 
+                self.room_group_name,
                 {
-                    'type': 'board_message',
-                    'player_id': self.player_id,
+                    'type': 'player_board_move',
                     'player_name': sender_player_name,
-                    'message_data': message_data_clean
+                    'updated_game_state': updated_game_state,
+                    'turn': room['game_state']['turn'],
+                    'game_over': game_over,
+                    'winner': winner_msg,
+                    'next_move_time_limit' : room['next_move_time_limit']
+                    # 'player_id': self.player_id,
+                    # 'move_x': int(move_x),
+                    # 'move_y': int(move_y),
                 }
             )
-        elif message_action == 'make_move':
-            # player_ready = room['players'][self.player_id]['reset_wish']
+        else:
+            print("move is not valid")
+            self.send(json.dumps({
+                'action': 'move_failed',
+                'fail_msg': 'Invalid move'
+            })) 
+
+
+    async def handle_reset(self, text_data_json):
+        room = rooms_state[self.room_name]
+        sender_player_name = room['players'][self.player_id]['name']
+
+        play_again_value = text_data_json['play_again_value']
+        try:
+            play_again_value = bool(play_again_value)
+        except:
+            print("invalid reset req")
+            return
+        
+        room = rooms_state[self.room_name]
+        player = room['players'][self.player_id]
+        player_name = player['name']
+        player['reset_wish'] = play_again_value
+
+        reset_msg_disp = f"{player_name} wants to {'reset' if play_again_value else 'cancel reset'}"
+        print("reset", room)
+
+        if bothReadyToReset(room['players']):
+            reset_msg_disp += "\nGame has been reset"
+            print("reset", room['players'])
+            for player_info in room['players'].values():
+                player_info['reset_wish'] = False
+            room['game_state'] = game_logic.newGameState()
+
+            # reset timer details
+            if room['move_timer_task'] !=None:
+                room['move_timer_task'].cancel()
+                room['move_timer_task'] = None
+            room['next_move_time_limit'] = None
+
+            fresh_game_state = room['game_state']
+            print("reset", fresh_game_state)
+            board = fresh_game_state['board']
+            winner = fresh_game_state['winner']
+
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'play_again_reset',
+                    'reset_state': True,
+                    'reset_message': reset_msg_disp,
+                    'turn': fresh_game_state['turn'],
+                    'next_move_time_limit': room['next_move_time_limit'],
+                    'board': board,
+                    'winner': winner
+                }
+            )
             
-            move_x = text_data_json['move_x']
-            move_y = text_data_json['move_y']
-            game_state = room['game_state']
-            
-            if len(room['players']) < 2:
-                await self.send(text_data=json.dumps({
-                    'action': 'move_failed',
-                    'fail_msg': 'Wait for your opponent to join'
-                })) 
-                return
-            if game_state['winner']!=None:
-                print("game is over")
-                await self.send(text_data=json.dumps({
-                    'action': 'move_failed',
-                    'fail_msg': 'Game is over'
-                })) 
-                return
-            
-            expected_player_id = room['symbol_to_pid'][game_state['turn']]
-            playerSymbol = room['pid_to_symbol'][self.player_id]
+        else:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'play_again_reset',
+                    'reset_state': False,
+                    'reset_message': reset_msg_disp
+                }
+            )
 
-            if self.player_id != expected_player_id:
-                print("Not your turn")
-                await self.send(text_data=json.dumps({
-                    'action': 'move_failed',
-                    'fail_msg': 'Not your turn'
-                })) 
-                return
-
-            if not isValidMove(move_x, move_y):
-                print("invalid move index")
-                # await self.send(text_data=json.dumps({
-                #     'action': 'move_failed',
-                #     'fail_msg': 'Invalid move'
-                # })) 
-                return
-
-            moveMade = game_logic.playerMakeMove(game_state, int(move_x), int(move_y), playerSymbol)
-
-            winner_name = None
-            winner_msg = ""
-            game_over = False
-            if moveMade:
-                # start new timer for the other player on successful move
-                if room['move_timer_task'] != None and not room['move_timer_task'].done():
-                    room['move_timer_task'].cancel()
-                    room['next_move_time_limit'] = None
-                # create the timer task after checking if the game is over
-
-                # check if game is over
-                updated_game_state = room['game_state']
-                gameOver = game_logic.checkGameOverWin(updated_game_state)
-
-                # # timer created after setting winner details
-                # room['move_timer_task'] = asyncio.create_task(self.move_timer_coroutine())
-
-                game_over = gameOver[0]
-                if gameOver[0]:
-                    print(room)
-                    if gameOver[1] != "Tie":
-                        winner_id = room['symbol_to_pid'][gameOver[1]]
-                        winner_name = room['players'][winner_id]['name']
-                    else:
-                        winner_name = "Tie"
-                    winner_msg = f"{winner_name} {playerSymbol if winner_name!='Tie' else ''}"
-                    room['winner_log'].append(winner_name)
-                # only start new timer if game is not over
-                else:
-                    room['move_timer_task'] = asyncio.create_task(self.move_timer_coroutine())
-                    room['next_move_time_limit'] = round((time.time() + 10) * 1000)
-
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'player_board_move',
-                        'player_name': sender_player_name,
-                        'updated_game_state': updated_game_state,
-                        'turn': room['game_state']['turn'],
-                        'game_over': game_over,
-                        'winner': winner_msg,
-                        'next_move_time_limit' : room['next_move_time_limit']
-                        # 'player_id': self.player_id,
-                        # 'move_x': int(move_x),
-                        # 'move_y': int(move_y),
-                    }
-                )
-            else:
-                print("move is not valid")
-                self.send(json.dumps({
-                    'action': 'move_failed',
-                    'fail_msg': 'Invalid move'
-                })) 
-
-        elif message_action == 'reset_game':
-            play_again_value = text_data_json['play_again_value']
-            try:
-                play_again_value = bool(play_again_value)
-            except:
-                print("invalid reset req")
-                return
-            
-            room = rooms_state[self.room_name]
-            player = room['players'][self.player_id]
-            player_name = player['name']
-            player['reset_wish'] = play_again_value
-
-            reset_msg_disp = f"{player_name} wants to {'reset' if play_again_value else 'cancel reset'}"
-            print("reset", room)
-
-            if bothReadyToReset(room['players']):
-                reset_msg_disp += "\nGame has been reset"
-                print("reset", room['players'])
-                for player_info in room['players'].values():
-                    player_info['reset_wish'] = False
-                room['game_state'] = game_logic.newGameState()
-
-                # reset timer details
-                if room['move_timer_task'] !=None:
-                    room['move_timer_task'].cancel()
-                    room['move_timer_task'] = None
-                room['next_move_time_limit'] = None
-
-                fresh_game_state = room['game_state']
-                print("reset", fresh_game_state)
-                board = fresh_game_state['board']
-                winner = fresh_game_state['winner']
-
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'play_again_reset',
-                        'reset_state': True,
-                        'reset_message': reset_msg_disp,
-                        'turn': fresh_game_state['turn'],
-                        'next_move_time_limit': room['next_move_time_limit'],
-                        'board': board,
-                        'winner': winner
-                    }
-                )
-                
-            else:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'play_again_reset',
-                        'reset_state': False,
-                        'reset_message': reset_msg_disp
-                    }
-                )
-
-            # set_play_again = assignPlayersReadyState(room, self.player_id, play_again_value)
-            rooms_state[self.room_name]['chat_log'].append(('game_sys', reset_msg_disp))
+        # set_play_again = assignPlayersReadyState(room, self.player_id, play_again_value)
+        rooms_state[self.room_name]['chat_log'].append(('game_sys', reset_msg_disp))
     
     async def board_message(self, event):
         message_data = event['message_data']
