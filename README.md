@@ -27,13 +27,17 @@ A browser-based, real-time Tic Tac Toe game built with **Django Channels** and *
 3. Install dependencies:
     ```pip install -r requirements.txt```
 
-4. Run migrations:
+4. Add a secret key:
+    - Create secrets.py file in TicTacToeMult folder (next the one containing settings.py)
+    - Run ```python -c "from django.core.management.utils import get_random_secret_key; print(f\"my_secret_key = '{get_random_secret_key()}'\")" > TicTacToeMult/secrets.py``` in the terminal.
+
+5. Run migrations:
     ```python manage.py migrate```
 
-5. Start the server:
+6. Start the server:
     ```python manage.py runserver```
 
-6. Open your browser at http://127.0.0.1:8000 and enjoy the game!
+7. Open your browser at http://127.0.0.1:8000 and enjoy the game!
 
 ## Usage
 - Create or join a game room
