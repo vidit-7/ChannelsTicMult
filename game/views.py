@@ -64,3 +64,6 @@ def change_playername(request):
                 samesite="Lax"
             )
         return JsonResponse({'success':False})
+
+def home_page_redir(request):
+    return redirect("gameLobby")
