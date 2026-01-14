@@ -8,7 +8,7 @@ A browser-based, real-time Tic Tac Toe game built with **Django Channels** and *
 - **Server-side move validation**, turn enforcement, and win/tie detection  
 - **In-room chat** and **move timers** for each player  
 - **Mutual-consent game reset** mechanism  
-- Single-player mode with **AI**:
+- Single-player mode:
   - Random moves
   - **Unbeatable minimax strategy**  
 - Room verification with database-backed UUIDs  
@@ -22,13 +22,13 @@ A browser-based, real-time Tic Tac Toe game built with **Django Channels** and *
 2. Create a virtual environment:
     ```python -m venv venv```
     On Windows: ```venv\Scripts\activate```
-    On Linux source ```venv/bin/activate```
+    On Linux ```source venv/bin/activate```
 
 3. Install dependencies:
     ```pip install -r requirements.txt```
 
 4. Add a secret key:
-    - Create secrets.py file in TicTacToeMult folder (next the one containing settings.py)
+    - Create secrets.py file in TicTacToeMult folder (the one containing settings.py)
     - Run ```python -c "from django.core.management.utils import get_random_secret_key; print(f\"my_secret_key = '{get_random_secret_key()}'\")" > TicTacToeMult/secrets.py``` in the terminal.
 
 5. Run migrations:
